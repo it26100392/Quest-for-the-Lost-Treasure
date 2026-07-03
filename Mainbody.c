@@ -1,21 +1,43 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 //#include <unistd.h>
 
 #define Map_S 15
 
+typedef struct {
+    char name[10];
+    int row;
+    int col;
+    int health;
+    int score;
+    int keys;
+    char symbol;
+    int isalive;
+}player;
+
+
 //global 2d arrays
 char map[Map_S][Map_S];
 int Traps[Map_S][Map_S];
+player players[2];
 
 //func protyping 
 void startingPage();
 void howtoplay();
 void initializeMap();
 void printmap();
+void placewalls();
+void placeTreasures();
+void placeHealthpacks();
+void placeKeys();
+void placeDoors();
+void placeTraps();
+void placeplayers();
 
 int main(){
+    srand((time(NULL)));
     //variables
     int startIn= 0;
     int goback = 0;
@@ -30,6 +52,7 @@ do{
         case 1:
             system("clear");
             initializeMap();
+            placeplayers();
             printmap();
             printf("\npressenter to continue ...");
             while(getchar() != '\n');
@@ -112,7 +135,12 @@ void initializeMap(){
             }
         }
     }
-
+   placewalls();
+   placeTreasures();
+   placeHealthpacks();
+   placeKeys();
+   placeDoors();
+   placeTraps();
 
 }
 
@@ -124,4 +152,136 @@ void printmap(){
         printf("\n");
     }
 
+    printf("\n");
+    for(int i=0;i<2;i++){
+        printf("Player %s | HP: %d | Score : %d |Keys: %d \n",
+            players[i].name,
+            players[i].health,
+            players[i].score,
+            players[i].keys);
+    }
+
+}
+
+void placewalls(){
+    int walls = 0;
+
+    while(walls<30){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' '){
+              map[row][col] = '#';
+              walls++;
+        }
+
+    }
+
+}
+
+void placeTreasures(){
+    int treasures = 0;
+
+    while(treasures < 12){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' '){
+              map[row][col] = 'T';
+              treasures++;
+        }
+
+    }
+
+}
+
+void placeHealthpacks(){
+    int health = 0;
+
+    while(health < 5){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' '){
+              map[row][col] = 'H';
+              health++;
+        }
+
+    }
+
+}
+
+void placeKeys(){
+    int keys = 0;
+
+    while(keys < 3){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' '){
+              map[row][col] = 'K';
+              keys++;
+        }
+
+    }
+
+}
+
+void placeDoors(){
+    int doors = 0;
+
+    while(doors < 3){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' '){
+              map[row][col] = 'D';
+              doors++;
+        }
+
+    }
+
+}
+
+void placeTraps(){
+
+    int traps = 0;
+
+    while(traps < 10){
+        int row = (rand()%13)+1;
+        int col = (rand()%13)+1;
+
+        if (map[row][col]==' ' && Traps[row][col] == 0){
+              Traps[row][col] = 1;
+              traps++;
+        }
+
+    }
+
+}
+
+void placeplayers(){
+    for(int i=0;i<2;i++){
+        printf("Enter the %d player name :",i+1);
+        scanf("%s",players[i].name);
+       
+        players[i].health = 100;
+        players[i].score = 0;
+        players[i].keys = 0;
+        players[i].symbol = '1'+i;
+        players[i].isalive = 1;
+
+        int placed = 0;
+        while(!placed){
+            int row = rand()%13+1;
+            int col = rand()%13+1;
+            if(map[row][col] == ' '){
+                players[i].row = row;
+                players[i].col = col;
+                map[row][col] = players[i].symbol;
+                placed = 1;
+            }
+
+        }
+    }
 }
