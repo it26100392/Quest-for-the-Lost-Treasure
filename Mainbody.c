@@ -3,9 +3,10 @@
 #include <string.h>
 #include <time.h>
 #include <ctype.h>
+#include <unistd.h>
 
 #define Map_S 15
-#define Mxplayers 2
+#define Mxplayers 3
 
 typedef struct {
     char name[10];
@@ -22,8 +23,8 @@ typedef struct {
 //global 2d arrays
 char map[Map_S][Map_S];
 int Traps[Map_S][Map_S];
-
 player players[2];
+int activePlayers = 2;
 
 //func protyping 
 void startingPage();
@@ -56,6 +57,19 @@ do{
     scanf("%d",&startIn);
     switch(startIn){
         case 1:
+            system("clear");
+            printf("====== SELECT THE PLAYER MODE =====\n");
+            printf("| 1) 2 PLAYERS                     |\n");
+            printf("| 2) 3 PLAYERS                     |\n");
+            printf("|__________________________________|\n");
+            int choise;
+            scanf("%d",&choise);
+             if (choise == 2){
+                activePlayers = 3;
+             }else {
+                activePlayers = 2;
+             }
+
             system("clear");
             initializeMap();
             placeplayers();
@@ -156,8 +170,8 @@ void printmap(){
     }
 
     printf("\n");
-    for(int i=0;i<2;i++){
-        printf("Player %s | HP: %d | Score : %d |Keys: %d \n",
+    for(int i=0;i<activePlayers;i++){
+        printf("Player %s | HP: %d  | Score : %d  |Keys: %d \n",
             players[i].name,
             players[i].health,
             players[i].score,
@@ -265,7 +279,7 @@ void placeTraps(){
 
 void placeplayers(){
 
-    for(int i=0;i<Mxplayers;i++){
+    for(int i=0;i<activePlayers;i++){
         printf("Enter the %d player name :",i+1);
         scanf("%s",players[i].name);
        
@@ -296,7 +310,7 @@ int isValidMove(int row,int col){
         return 0;
     }
 
-    if (map[row][col] == "#"){
+    if (map[row][col] == '#'){
         return 0;
     }
     return 1;
@@ -323,7 +337,7 @@ void processTile(int index){
     if(map[row][col] == 'T'){
         players[index].score += 10;
         map[row][col] = ' ';
-        printf("Nice JOB! %s found a treasure! +10 Score\n",players[index].name);
+        printf("\n Nice JOB! %s found a treasure! +10 Score\n",players[index].name);
 
     }
 
@@ -334,7 +348,7 @@ void processTile(int index){
          }
 
          map[row][col]=' ';
-         printf("%s got a Medikit! +20HP\n",players[index].name);
+         printf("\n %s got a Medikit! +20HP\n",players[index].name);
 
     }
 
@@ -347,13 +361,18 @@ void processTile(int index){
 }
 
 void movePlayer(int index){
-    char moves[10];
+    char moves[50];
 
-    printf("\n %s enter moves (WASD)|max 4 moves :",players[index].name);
+    printf("\n%s (player %d)enter moves (WASD)|max 4 moves :",players[index].name,index+1);
     scanf("%s",moves);
 
     if(strlen(moves)>4){
-        printf("Too many moves! Your turn hass been cancelld !!!");
+        printf("  --------------------------------------------------\n");
+        printf("  | Too many moves! Your turn hass been cancelld !!!|\n");
+        printf("   --------------------------------------------------\n");
+        
+        fflush(stdout);
+        sleep(2);
         return;
     }
       
@@ -376,7 +395,7 @@ void movePlayer(int index){
         }else if(move =='D'){
             newcol++;
         }else{
-            printf("You have entered a invalid move '%c' !!! SKIPPED !!!",moves[i]);
+            printf("You have entered a invalid move '%c' !!! SKIPPED !!!\n",moves[i]);
             continue;
         }
     
@@ -387,7 +406,7 @@ void movePlayer(int index){
             map[newrow][newcol] = ' ';
             printf("%s unlocked a door!\n",players[index].name);
         }else{
-            printf("%s need a key to open this door!",players[index].name);
+            printf("%s need a key to open this door!\n",players[index].name);
              continue;
         }
     }
@@ -408,6 +427,10 @@ void movePlayer(int index){
 
     }
   }
+
+  fflush(stdout);
+  sleep(2);
+
 }
 
 void gameloop(){
@@ -415,7 +438,7 @@ void gameloop(){
 
    while(gamerunning){
 
-       for(int i=0;i<Mxplayers;i++){
+       for(int i=0;i<activePlayers;i++){
         if(!players[i].isalive) continue;
         
         system("clear");
@@ -436,12 +459,15 @@ void gameloop(){
         if(chestLeft == 0){
             printf("\n ALL TREASURES HAVE BEEN COLLECTED\n");
             printf("---------GAME OVER-------\n");
+
+            fflush(stdout);
+            sleep(4);
             gamerunning = 0;
             break;
         }
 
         int aliveplayers = 0;
-        for(int j=0;j<Mxplayers;j++){
+        for(int j=0;j<activePlayers;j++){
             if(players[j].isalive){
                 aliveplayers++;
             }}
@@ -449,6 +475,9 @@ void gameloop(){
             if(aliveplayers == 0){
                 printf("\n All players has been eleminated !\n");
                 printf("-------GAME OVER-------\n");
+
+                fflush(stdout);
+                sleep(4);
                 gamerunning = 0;
                 break;
             }
