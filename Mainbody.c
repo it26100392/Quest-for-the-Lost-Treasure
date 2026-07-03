@@ -3,8 +3,17 @@
 #include <string.h>
 //#include <unistd.h>
 
+#define Map_S 15
+
+//global 2d arrays
+char map[Map_S][Map_S];
+int Traps[Map_S][Map_S];
+
+//func protyping 
 void startingPage();
 void howtoplay();
+void initializeMap();
+void printmap();
 
 int main(){
     //variables
@@ -13,28 +22,33 @@ int main(){
     
     //starting body
 do{
-    system("cls");
+    system("clear");
     startingPage(); 
     printf("Enter your choice:"); //getting starting input
     scanf("%d",&startIn);
     switch(startIn){
         case 1:
-           // newgame();
+            system("clear");
+            initializeMap();
+            printmap();
+            printf("\npressenter to continue ...");
+            while(getchar() != '\n');
+            getchar();
             break;
         case 2:
             //loadgame();
             break;
         case 3:
-            system("cls");
+            system("clear");
             howtoplay();
             scanf("%d",&goback);
             if (goback == 1){
-                system("cls");
+                system("clear");
                 startingPage();
             }
             break;
         case 4:
-         system("cls");
+         system("clear");
          printf("Thanks for playing!");
          exit(0);
 
@@ -60,7 +74,7 @@ void startingPage(){
       printf("||          1. Start New Game          ||\n");
       printf("||          2. Load game               ||\n");
       printf("||          3. How to play             ||\n");
-      printf("||          4  Exit game               ||\n");
+      printf("||          4. Exit game               ||\n");
       printf("||                                     ||\n");
       printf("||                                     ||\n");
       printf("\\=====================================//\n");
@@ -80,4 +94,34 @@ void howtoplay(){
     printf("|                                                                             |\n");
     printf("| *Enter 1 to go back *                                                       |\n");
     printf("|=============================================================================|\n");
+}
+
+void initializeMap(){
+
+    for(int row=0;row < Map_S;row++){
+        for(int col = 0;col < Map_S ;col++){
+            map[row][col]= ' ';
+            Traps[row][col] = 0;
+        }
+    }
+
+    for(int row=0;row<Map_S;row++){
+        for(int col = 0;col<Map_S;col++){
+            if(row==0 || row == Map_S-1 || col==0 || col == Map_S-1){
+                map[row][col] = '#';
+            }
+        }
+    }
+
+
+}
+
+void printmap(){
+    for(int row=0;row < Map_S;row++){
+        for(int col = 0;col < Map_S ;col++){
+           printf("%c ",map[row][col]);
+        }
+        printf("\n");
+    }
+
 }
