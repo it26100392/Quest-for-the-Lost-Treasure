@@ -7,6 +7,9 @@
 
 #define Map_S 15
 #define Mxplayers 3
+#define LOG_SIZE 100
+#define LOG_DISPLAY 5
+#define LOG_LENGTH 100
 
 typedef struct {
     char name[10];
@@ -20,11 +23,16 @@ typedef struct {
 }player;
 
 
-//global 2d arrays
+//globle varibles
 char map[Map_S][Map_S];
 int Traps[Map_S][Map_S];
 player players[3];
 int activePlayers = 2;
+int roundCounter=0;
+
+char eventLog[LOG_SIZE][LOG_LENGTH];
+int logCount = 0;
+int logIndex = 0;
 
 //func protyping 
 void startingPage();
@@ -45,6 +53,9 @@ void gameloop();
 void showscore();
 void savegame();
 void loadgame();
+void addLog(char *message);
+void printRecentLog();
+void saveLog();
 
 int main(){
     srand((time(NULL)));
@@ -62,10 +73,15 @@ do{
         case 1:
             system("clear");
             printf("====== SELECT THE PLAYER MODE =====\n");
-            printf("| 1) 2 PLAYERS                     |\n");
-            printf("| 2) 3 PLAYERS                     |\n");
-            printf("|__________________________________|\n");
+            printf("|     1 >  2 PLAYERS               |\n");
+            printf("|     2 >  3 PLAYERS               |\n");
+            printf("====================================\n");
+            printf("Enter 1 to the Two player game \n");
+            printf("Enter 2 to the Three player game \n");
+            printf("====================================\n");
+
             int choise;
+            printf("Plyer mode : ");
             scanf("%d",&choise);
              if (choise == 2){
                 activePlayers = 3;
@@ -108,7 +124,7 @@ do{
 }
 
 void startingPage(){
-      printf("//=====================================\\ \n");
+      printf(" ======================================= \n");
       printf("||  ================================   ||\n");
       printf("||  ||  QUEST FOR THE LOST TREASURE || ||\n");
       printf("||  ================================   ||\n");
@@ -121,7 +137,7 @@ void startingPage(){
       printf("||          4. Exit game               ||\n");
       printf("||                                     ||\n");
       printf("||                                     ||\n");
-      printf("\\=====================================//\n");
+      printf(" =======================================\n");
 
 }
 
@@ -166,8 +182,16 @@ void initializeMap(){
 }
 
 void printmap(){
+
+    printf("       ===========================================\n");
+    printf("       ||       QUEST FOR THE LOST TREASURE     ||\n");
+    printf("       ||               ROUND %-3d               ||\n",roundCounter+1);
+    printf("       ===========================================\n");
+    printf("\n");
+
+
     for(int row=0;row < Map_S;row++){
-        printf("     ");
+        printf("              ");
         for(int col = 0;col < Map_S ;col++){
            printf("%c ",map[row][col]);
         }
@@ -187,6 +211,8 @@ void printmap(){
         printf("____________________________________________________________\n");
     }
 
+    printf("____________________________________________________________\n");
+    //printRecentLog();
 }
 
 
@@ -287,8 +313,6 @@ void placeTraps(){
 
 }
 
-
-
 void placeplayers(){
 
     for(int i=0;i<activePlayers;i++){
@@ -332,16 +356,21 @@ void processTile(int index){
 
     int row = players[index].row;
     int col = players[index].col;
+    char logMsg[LOG_LENGTH];
     
     if(Traps[row][col] == 1){
 
             players[index].health -= 20;
             Traps[row][col] = 0;
+            snprintf(logMsg,LOG_LENGTH,"%s hit a trap! -20HP",players[index].name);
+            addLog(logMsg);
             printf("%s caught on a trap -20HP\n",players[index].name);
 
             if(players[index].health <= 0){
                 players[index].health = 0;
                 players[index].isalive = 0;
+                snprintf(logMsg,LOG_LENGTH,"%s has been eliminated!",players[index].name);
+                addLog(logMsg);
                 printf("%s has been eliminated\n",players[index].name);
             }
     }
@@ -349,6 +378,8 @@ void processTile(int index){
     if(map[row][col] == 'T'){
         players[index].score += 10;
         map[row][col] = ' ';
+        snprintf(logMsg,LOG_LENGTH,"%s found a treasure +10 Score",players[index].name);
+        addLog(logMsg);        
         printf("\n Nice JOB! %s found a treasure! +10 Score\n",players[index].name);
 
     }
@@ -360,6 +391,8 @@ void processTile(int index){
          }
 
          map[row][col]=' ';
+         snprintf(logMsg,LOG_LENGTH,"%s used a health pack! +20HP",players[index].name);
+         addLog(logMsg);
          printf("\n %s got a Medikit! +20HP\n",players[index].name);
 
     }
@@ -367,6 +400,8 @@ void processTile(int index){
     if(map[row][col]=='K'){
         players[index].keys += 1;
         map[row][col] = ' ';
+        snprintf(logMsg,LOG_LENGTH,"%s picked up a key",players[index].name);
+        addLog(logMsg);
         printf("%s picked up a key !",players[index].name);
     }
 
@@ -416,6 +451,9 @@ void movePlayer(int index){
         if(players[index].keys > 0){
             players[index].keys--;
             map[newrow][newcol] = ' ';
+            char logMsg[LOG_LENGTH];
+            snprintf(logMsg,LOG_LENGTH,"%s unlocked a door !",players[index].name);
+             addLog(logMsg);
             printf("%s unlocked a door!\n",players[index].name);
         }else{
             printf("%s need a key to open this door!\n",players[index].name);
@@ -471,7 +509,7 @@ void gameloop(){
         if(chestLeft == 0){
             printf("\n ALL TREASURES HAVE BEEN COLLECTED\n");
             printf("---------GAME OVER-------\n");
-
+            saveLog();
             showscore();
             gamerunning = 0;
             break;
@@ -486,7 +524,7 @@ void gameloop(){
             if(aliveplayers == 0){
                 printf("\n All players has been eleminated !\n");
                 printf("-------GAME OVER-------\n");
-
+                saveLog();
                 showscore();
                 gamerunning = 0;
                 break;
@@ -494,6 +532,7 @@ void gameloop(){
        }
 
        if(gamerunning){
+        roundCounter++;
         int savechoise;
         printf("\n Do you want to save? (1:YES / 0:NO) : ");
         scanf("%d",&savechoise);
@@ -508,12 +547,12 @@ void gameloop(){
 
 void showscore(){
      system("clear");
-      printf("\n================ HP BONUS ==============\n");
+      printf("\n================= HP BONUS ================\n");
       for(int i=0;i<activePlayers;i++){
        if(players[i].isalive){
         int bonus = players[i].health/2;
         players[i].score += bonus;
-        printf("%s received +%d bonus score (HP/2)",players[i].name,bonus);
+        printf("%s received +%d bonus score (HP/2) \n",players[i].name,bonus);
       }
     }  
      
@@ -535,7 +574,7 @@ void showscore(){
     char *ranks[] = {"1st","2nd","3rd"};
 
     for(int i=0;i<activePlayers;i++){
-    printf("||  %s > %-10s   Score: %-8d ||\n",ranks[i],players[i].name,players[i].score);
+    printf("||   %s > %-10s   Score: %-8d  ||\n",ranks[i],players[i].name,players[i].score);
     }
 
     printf("===========================================\n");
@@ -544,7 +583,7 @@ void showscore(){
     if(activePlayers > 1 && players[0].score == players[1].score){
         printf("||~~~~~~~~~~~~~ MATCH IS A TIE ~~~~~~~~~~||\n");
     }else{
-        printf("     WINNER IS %-25s  \n",players[0].name);
+        printf(">>>>>         WINNER IS %-13s<<<<<  \n",players[0].name);
     }
     
     printf("===========================================\n");
@@ -570,6 +609,7 @@ void savegame(){
     fwrite(players, sizeof(player),activePlayers,file);
     fwrite(map, sizeof(map),1,file);
     fwrite(Traps, sizeof(Traps),1,file);
+    fwrite(&roundCounter, sizeof(int),1,file);
     fclose(file);
 
     printf("\n");
@@ -612,6 +652,7 @@ void loadgame(){
     fread(players, sizeof(player),activePlayers,file);
     fread(map, sizeof(map),1,file);
     fread(Traps, sizeof(Traps),1,file);
+    fread(&roundCounter, sizeof(int),1,file);
     fclose(file);
 
     printf("\n");
@@ -626,3 +667,61 @@ void loadgame(){
 
 
 }  
+
+
+void addLog(char *message){
+    snprintf(eventLog[logIndex],LOG_LENGTH,"[R%d] %s",roundCounter,message);
+
+    logIndex = (logIndex+1)%LOG_SIZE;
+    logCount++;
+}
+
+void printRecentLog(){
+
+    printf("\n");
+    printf("  ===========================================\n");
+    printf("                   EVENT LOG                 \n");
+    printf("  ===========================================\n");
+ 
+    // calculate how many entries to show
+    int total = logCount < LOG_DISPLAY ? logCount : LOG_DISPLAY;
+
+    if(total == 0){
+        printf(" >>>>>        No events yet...         <<<<<<\n");
+    }else{
+        // find starting index of last 5 entries
+        int start = (logIndex - total + LOG_SIZE) % LOG_SIZE;
+       
+        for(int i = 0; i < total; i++){
+            int idx = (start + i) % LOG_SIZE;
+            printf("     ║  %-44s║\n", eventLog[idx]);
+        }
+    }
+
+   printf("  ===========================================\n");
+}
+
+void saveLog(){
+    FILE *file = fopen("gamelog.txt", "w");
+
+    if(file == NULL){
+        printf("Error saving log!\n");
+        return;
+    }
+
+    fprintf(file, "======= QUEST FOR THE LOST TREASURE =======\n");
+    fprintf(file, "Total Rounds: %d\n", roundCounter);
+    fprintf(file, "===========================================\n\n");
+
+    // write all log entries in order
+    int total = logCount < LOG_SIZE ? logCount : LOG_SIZE;
+    int start = logCount < LOG_SIZE ? 0 : logIndex;
+
+    for(int i = 0; i < total; i++){
+        int idx = (start + i) % LOG_SIZE;
+        fprintf(file, "%s\n", eventLog[idx]);
+    }
+
+    fclose(file);
+    printf("\n     Game log saved to gamelog.txt!\n");
+}
