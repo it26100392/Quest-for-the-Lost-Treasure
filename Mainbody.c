@@ -43,6 +43,8 @@ void processTile(int index);
 void movePlayer(int index);
 void gameloop();
 void showscore();
+void savegame();
+void loadgame();
 
 int main(){
     srand((time(NULL)));
@@ -77,7 +79,8 @@ do{
             gameloop();
             break;
         case 2:
-            //loadgame();
+            system("clear");
+            loadgame();
             break;
         case 3:
             system("clear");
@@ -164,6 +167,7 @@ void initializeMap(){
 
 void printmap(){
     for(int row=0;row < Map_S;row++){
+        printf("     ");
         for(int col = 0;col < Map_S ;col++){
            printf("%c ",map[row][col]);
         }
@@ -184,6 +188,7 @@ void printmap(){
     }
 
 }
+
 
 void placewalls(){
     int walls = 0;
@@ -281,6 +286,8 @@ void placeTraps(){
     }
 
 }
+
+
 
 void placeplayers(){
 
@@ -485,6 +492,16 @@ void gameloop(){
                 break;
             }
        }
+
+       if(gamerunning){
+        int savechoise;
+        printf("\n Do you want to save? (1:YES / 0:NO) : ");
+        scanf("%d",&savechoise);
+        if(savechoise == 1){
+            savegame();
+        }
+       }
+
    }
 
 }
@@ -524,7 +541,7 @@ void showscore(){
     printf("===========================================\n");
 
 
-    if(activePlayers > 1 && players[0].score){
+    if(activePlayers > 1 && players[0].score == players[1].score){
         printf("||~~~~~~~~~~~~~ MATCH IS A TIE ~~~~~~~~~~||\n");
     }else{
         printf("     WINNER IS %-25s  \n",players[0].name);
@@ -538,3 +555,74 @@ void showscore(){
     getchar();
     
 }    
+
+
+
+void savegame(){
+    FILE *file=fopen("savefile.dat","wb");
+
+    if (file == NULL){
+        printf("Error saving game!");
+        return;
+    }
+
+    fwrite(&activePlayers, sizeof(int),1,file);
+    fwrite(players, sizeof(player),activePlayers,file);
+    fwrite(map, sizeof(map),1,file);
+    fwrite(Traps, sizeof(Traps),1,file);
+    fclose(file);
+
+    printf("\n");
+    printf("===========================================\n");
+    printf("           GAME SAVED SUCCESSFULLY         \n");
+    printf("===========================================\n");
+
+    fflush(stdout);
+    sleep(2);
+}
+
+void loadgame(){
+
+    FILE *file = fopen("savefile.dat","rb");
+
+    if(file == NULL){
+    printf("\n");
+    printf("===========================================\n");
+    printf("            NO SAVE FILE FOUND             \n");
+    printf("            Starting a new game ...        \n");
+    printf("===========================================\n");
+
+    fflush(stdout);
+    sleep(2);
+    return;
+
+    }
+
+
+    fread(&activePlayers ,sizeof(int),1,file );
+
+    if(activePlayers<2 || activePlayers>3){
+        printf("\n WARNING ! somthings wrong with the save file !!!\n");
+        fclose(file);
+        fflush(stdout);
+        sleep(2);
+        return;
+    }
+
+    fread(players, sizeof(player),activePlayers,file);
+    fread(map, sizeof(map),1,file);
+    fread(Traps, sizeof(Traps),1,file);
+    fclose(file);
+
+    printf("\n");
+    printf("===========================================\n");
+    printf("              GAME FILE LOADED             \n");
+    printf("===========================================\n");
+
+    fflush(stdout);
+    sleep(2);
+
+    gameloop();
+
+
+}  
