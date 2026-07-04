@@ -23,7 +23,7 @@ typedef struct {
 //global 2d arrays
 char map[Map_S][Map_S];
 int Traps[Map_S][Map_S];
-player players[2];
+player players[3];
 int activePlayers = 2;
 
 //func protyping 
@@ -42,6 +42,7 @@ int isValidMove(int row,int col);
 void processTile(int index);
 void movePlayer(int index);
 void gameloop();
+void showscore();
 
 int main(){
     srand((time(NULL)));
@@ -171,11 +172,15 @@ void printmap(){
 
     printf("\n");
     for(int i=0;i<activePlayers;i++){
-        printf("Player %s | HP: %d  | Score : %d  |Keys: %d \n",
+        printf("____________________________________________________________\n");
+        printf("\n");
+        printf("Player %d :%-10s  | HP: %d  | Score : %d  |Keys: %d \n",
+            i+1,
             players[i].name,
             players[i].health,
             players[i].score,
             players[i].keys);
+        printf("____________________________________________________________\n");
     }
 
 }
@@ -372,7 +377,7 @@ void movePlayer(int index){
         printf("   --------------------------------------------------\n");
         
         fflush(stdout);
-        sleep(2);
+        sleep(1.3);
         return;
     }
       
@@ -429,7 +434,7 @@ void movePlayer(int index){
   }
 
   fflush(stdout);
-  sleep(2);
+  sleep(1.3);
 
 }
 
@@ -460,8 +465,7 @@ void gameloop(){
             printf("\n ALL TREASURES HAVE BEEN COLLECTED\n");
             printf("---------GAME OVER-------\n");
 
-            fflush(stdout);
-            sleep(4);
+            showscore();
             gamerunning = 0;
             break;
         }
@@ -476,8 +480,7 @@ void gameloop(){
                 printf("\n All players has been eleminated !\n");
                 printf("-------GAME OVER-------\n");
 
-                fflush(stdout);
-                sleep(4);
+                showscore();
                 gamerunning = 0;
                 break;
             }
@@ -485,3 +488,53 @@ void gameloop(){
    }
 
 }
+
+void showscore(){
+     system("clear");
+      printf("\n================ HP BONUS ==============\n");
+      for(int i=0;i<activePlayers;i++){
+       if(players[i].isalive){
+        int bonus = players[i].health/2;
+        players[i].score += bonus;
+        printf("%s received +%d bonus score (HP/2)",players[i].name,bonus);
+      }
+    }  
+     
+    for (int i=0;i<activePlayers;i++){
+        for(int j=0;j<activePlayers-1-i;j++){
+            if(players[j].score < players[j+1].score){
+                player temp =players[j];
+                players[j] = players[j+1];
+                players[j+1] = temp;
+            }
+        }
+    }
+
+    printf("\n");
+    printf("===========================================\n");
+    printf("||              LEADERBOARD              ||\n");
+    printf("===========================================\n");
+
+    char *ranks[] = {"1st","2nd","3rd"};
+
+    for(int i=0;i<activePlayers;i++){
+    printf("||  %s > %-10s   Score: %-8d ||\n",ranks[i],players[i].name,players[i].score);
+    }
+
+    printf("===========================================\n");
+
+
+    if(activePlayers > 1 && players[0].score){
+        printf("||~~~~~~~~~~~~~ MATCH IS A TIE ~~~~~~~~~~||\n");
+    }else{
+        printf("     WINNER IS %-25s  \n",players[0].name);
+    }
+    
+    printf("===========================================\n");
+
+    fflush(stdout);
+    printf("\n Press ENTER to go back to main menu ");
+    while(getchar() != '\n');
+    getchar();
+    
+}    
